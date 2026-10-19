@@ -172,9 +172,11 @@ Testing rules:
 4. **Restore must be lossless.** A refresh, background/foreground cycle, or reconnect must
    re-`join` and repopulate the student's previous answers from the server.
 5. **Mobile WS is unreliable by default.** Any connection logic must include:
-   `visibilitychange` force-reconnect (iOS keeps zombie sockets), server ping every 30 s,
-   client watchdog (~70 s, reset on any frame), reconnect on `online`, backoff with jitter,
-   and a "reconnecting" UI state. See `TODO.md` → Platform notes.
+   `visibilitychange` force-reconnect (iOS keeps zombie sockets), a 5 s client `ping` **only
+   while the tab is visible**, a 15 s client watchdog (3 missed beats) that forces a reconnect,
+   server-side `lastSeen` sweep (idle > 20 s → close), reconnect on `online`, backoff with
+   jitter, and a "reconnecting" UI state. Every answer is acked within 1.5 s or resent with the
+   same `clientSeq` over the HTTP fallback. See `TODO.md` → Platform notes.
 6. **One WebSocket broadcast per transition.** Do not poll or push a `state` frame per
    second; countdowns are computed locally from `deadlineMs` + measured clock offset.
 7. **No secrets in URLs or logs.** Admin key goes in a header; never log usernames with

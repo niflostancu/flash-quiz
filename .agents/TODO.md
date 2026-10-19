@@ -49,7 +49,7 @@ Known gaps / defects to fix early:
 | D7 | Timing: server owns phase + `deadlineMs`; after a question expires the server auto-advances (config `autoAdvance`). Pause stores `remainingMs`; resume creates a fresh deadline. | Yes | S24 |
 | D8 | Identity: client-generated `crypto.randomUUID()` in `localStorage`; username is unique per quiz session (case-insensitive, 1–24 chars). Conflict → 409 + pick another name. | Yes | S22, S43 |
 | D9 | Admin protection: optional `adminKey` in config (sent as `X-Admin-Key`); if unset, admin endpoints are open and a warning is logged. Display + student endpoints are always public. | Yes | S28 |
-| D10 | Projector waiting screen shows the join URL from config `publicUrl`; QR code is **not** included (adds a dependency, not required). | Skip QR | S49 |
+| D10 | Projector waiting screen shows the join URL + QR Code from config `publicUrl` (use web search to find a popular QR generator dependency). | Add QR | S49 |
 | D11 | Projector does **not** reveal the correct answer after the timer (teacher reveals verbally). No reveal phase, no grading. | Yes | S50 |
 | D12 | Text answers: send on every input, debounced 400 ms; every distinct value is stored as a new history row. | Yes | S47 |
 | D13 | CSV export: one row per stored answer **event** (full history) + `--latest` flag for one row per student/question. | Yes | S31 |
@@ -62,8 +62,21 @@ Known gaps / defects to fix early:
 - **Mobile WebSocket caveat (verified online):** iOS/Safari can silently recycle a backgrounded
   WebSocket — `onclose` may never fire and `readyState` stays `OPEN` (WebKit bugs 228296,
   247943). Mitigations are mandatory, not optional: force-close + reconnect on
-  `visibilitychange → visible`, server `ping` every 30 s, client watchdog (~70 s) that resets
-  on any frame, reconnect on `online`, exponential backoff with jitter.
+  `visibilitychange → visible`, reconnect on `online`, exponential backoff with jitter, and a
+  heartbeat (below).
+- **Heartbeat = 5 s, visibility-gated:** the client sends `ping` every 5 s **only while the tab is
+  visible** (browser timers are throttled/suspended in background, so pings there are useless —
+  the page is closed on hide and reopened on show). The client watchdog fires after 15 s without
+  any inbound frame (3 missed beats) and forces a reconnect; the server tracks `lastSeen` per
+  connection and terminates sockets idle > 20 s. Rationale: 5 s keeps cellular NAT mappings alive
+  and detects a zombie socket **within a single question** (6–15 s), instead of after it closed.
+  Cost is one ~20 B frame per student per 5 s (≈0.5 kB/s for a 200-student class) — negligible.
+  Do not go below ~3 s: no benefit for a 6 s minimum question, more radio wakeups and more
+  server work.
+- **Lost answers:** a heartbeat cannot save a tap that vanished during a 6 s question. Every
+  `answer` carries `clientSeq` and must be acked within 1.5 s; if no `ack` arrives the client
+  resends over the HTTP fallback (`POST /api/answers`), which is idempotent on
+  `(studentId, questionIndex, clientSeq)`.
 - **NAT / proxies:** idle TCP mappings can be dropped in ~30 s on cellular; a reverse proxy must
   forward `Upgrade`/`Connection` headers and must not buffer the WS route.
 - **Timing:** never count down by decrementing a client-side integer. Send absolute
@@ -345,8 +358,10 @@ scripts/   + optional dev helpers
     passed to `serve({fetch, websocket})`; `/ws` route. Hub responsibilities: registry
     `connId → {ws, studentId?, role: "student"|"display"}` (display joins read-only via
     `?role=display`), `join` handshake → `hello` with state + own answers, broadcast `state` on
-    every engine transition, `ack`/`error` to the sender, server `ping` every 30 s and
-    terminate dead sockets, per-connection rate limit (e.g. 30 msg/s) and 2 KB frame cap.
+    every engine transition, `ack`/`error` to the sender, answer `pong` to every client `ping`,
+    track `lastSeen` per connection and terminate sockets idle > 20 s (no server-initiated ping
+    needed — every client runs the same 5 s heartbeat), per-connection rate limit (e.g. 30 msg/s)
+    and 2 KB frame cap.
     Never broadcast answers or comments.
   - Verify: `npm test` — hub logic with fake sockets (no real ports); `npm run dev` + `wscat`
     or `node --input-type=module -e` client for a manual smoke test.
@@ -436,8 +451,11 @@ scripts/   + optional dev helpers
   - Files: `frontend/lib/ws.ts`, `frontend/lib/ws.test.ts` (pure parts), `frontend/lib/clock.ts`
   - Do: build `ws://`/`wss://` from `location`; reconnect with exponential backoff (0.5 s → 8 s,
     jitter, reset on success); force-reconnect on `visibilitychange → visible` by nulling handlers,
-    closing, and opening a fresh socket (iOS zombie sockets); reconnect on `online`; watchdog
-    timer (~70 s) reset by any inbound frame; send `ping` on open and every 25 s; expose
+    closing, and opening a fresh socket (iOS zombie sockets); reconnect on `online`; send `ping`
+    every 5 s while `document.visibilityState === "visible"` (stop when hidden), restart on
+    `hello`; watchdog fires after 15 s without any inbound frame and forces a reconnect;
+    exponential backoff (0.5 s → 8 s, jitter); answer ack timeout of 1.5 s → resend the same
+    `clientSeq` over the HTTP fallback; expose
     `status: "connecting"|"open"|"reconnecting"|"closed"`, typed `send()` (queued while
     connecting, dropped when closed with an event), and clock offset = `serverTime - (t0+t1)/2`
     from `pong`.
@@ -469,7 +487,8 @@ scripts/   + optional dev helpers
   - Do: `choice` → A–F grid of unlabeled buttons (letter only) sized for thumbs; `number` →
     numeric input (`inputmode="numeric"`, pattern) with a "send" affordance only if needed;
     `text` → single-line input, debounced 400 ms, `Enter` flushes; every change sends over WS
-    with `clientSeq` (+ HTTP fallback if WS not open); optimistic highlight + "saved" tick;
+    with `clientSeq` (+ HTTP fallback when WS is not open or no `ack` arrives within 1.5 s);
+    optimistic highlight + "saved" tick;
     disable all input when the local deadline passed or phase ≠ `question`; no answer
     revealed on screen; handle `E_CLOSED` by locking and showing a neutral message.
   - Verify: manual on a phone-sized viewport: tap latency < 100 ms locally, answer survives
@@ -661,4 +680,4 @@ engine branch is more valuable than a percentage.
 - Team modes, multiple simultaneous quizzes, multi-class scheduling.
 - TLS in-process, Redis, message queues, ORMs, Docker Swarm/K8s manifests.
 - Native apps, PWA install/offline quiz play (offline *restore* is covered by S48).
-- Answer reveal phase on the projector (D11) and QR code (D10).
+- Answer reveal phase on the projector (D11)
