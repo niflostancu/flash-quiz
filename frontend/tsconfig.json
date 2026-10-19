@@ -5,5 +5,5 @@
     "jsx": "preserve",
     "types": []
   },
-  "include": ["src"]
+  "include": ["src", "../common/src"]
 }

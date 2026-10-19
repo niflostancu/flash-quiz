@@ -8,6 +8,7 @@
     "node": ">=24.0.0"
   },
   "workspaces": [
+    "common",
     "frontend",
     "backend"
   ],
@@ -25,5 +26,8 @@
     "concurrently": "^10.0.6",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
   }
 }
