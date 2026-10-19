@@ -11,8 +11,9 @@
     "frontend"
   ],
   "scripts": {
-    "dev": "npm run dev:frontend",
+    "dev": "npm run dev:backend",
     "dev:frontend": "npm -C frontend run dev",
+    "dev:backend": "npm -C backend run dev",
     "build": "npm -C backend run build",
     "start": "npm -C backend run start",
     "check": "npx biome check"

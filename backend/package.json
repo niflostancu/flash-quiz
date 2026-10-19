@@ -1,0 +1,23 @@
+{
+  "name": "@fquiz/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "FQuiz backend based on Hono lightweight server",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node24 --outfile=dist/index.js",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.5",
+    "hono": "^4.13.13"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.15"
+  }
+}
+
