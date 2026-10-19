@@ -1,0 +1,13 @@
+# Node deps
+node_modules/
+
+# Build output
+dist/
+
+# Env / local
+.env
+.env.*
+
+# logs, trash
+*.log
+.DS_Store

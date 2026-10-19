@@ -1,0 +1,26 @@
+{
+  "name": "fquiz",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Fast-paced Flash Quiz for university classrooms",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "npm run dev:frontend",
+    "dev:frontend": "npm -C frontend run dev",
+    "build": "npm -C backend run build",
+    "start": "npm -C backend run start",
+    "check": "npx biome check"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@types/node": "^24.19.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}
