@@ -3,7 +3,7 @@
   "compilerOptions": {
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "preserve",
-    "types": []
+    "types": ["vite/client"]
   },
-  "include": ["src", "../common/src"]
+  "include": [".", "../common/src"]
 }

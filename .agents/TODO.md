@@ -53,6 +53,7 @@ Known gaps / defects to fix early:
 | D11 | Projector does **not** reveal the correct answer after the timer (teacher reveals verbally). No reveal phase, no grading. | Yes | S50 |
 | D12 | Text answers: send on every input, debounced 400 ms; every distinct value is stored as a new history row. | Yes | S47 |
 | D13 | CSV export: one row per stored answer **event** (full history) + `--latest` flag for one row per student/question. | Yes | S31 |
+| D14 | TypeScript pinned to **6.0.3**: `vue-tsc` 3.3.x cannot load the TypeScript 7 native compiler (no `typescript/lib/tsc` JS API; upstream says use TS 6 or the `typescript-native-bridge` fork). Revisit when vue-tsc supports TS 7.1. | TS 6.0.3 | all |
 
 ---
 
@@ -106,7 +107,7 @@ scripts/   + optional dev helpers
 
 ## M0 — Hygiene & guardrails (no product behavior)
 
-- [ ] **S01 — Repo hygiene** · deps: none · commit: `chore: add data dir and clean workspace noise`
+- [x] **S01 — Repo hygiene** · deps: none · commit: `chore: add data dir and clean workspace noise`
   - Files: `.gitignore`, `data/.gitkeep`, delete `backend/package-lock.json`
   - Do: ignore `data/`, `*.sqlite`, `*.sqlite-*`, `*.db`, keep `.agents/` tracked; add empty
     `data/.gitkeep`; remove the stray per-workspace lockfile; confirm `config.yaml` policy
@@ -114,12 +115,13 @@ scripts/   + optional dev helpers
   - Verify: `git status --short`, `git check-ignore -v data/fquiz.sqlite`.
   - Done when: fresh checkout + `npm install` still works and no build output is tracked.
 
-- [ ] **S02 — Typecheck baseline** · deps: S01 · commit: `build: make typecheck cover every workspace`
+- [x] **S02 — Typecheck baseline** · deps: S01 · commit: `build: make typecheck cover every workspace`
   - Files: `frontend/tsconfig.json`, `frontend/package.json`, `common/package.json`,
     `backend/package.json`, `package.json`
-  - Do: fix `frontend` `include` per D1 (keep `lib: DOM`), add `vue-tsc --noEmit` as
-    `frontend` typecheck (dep: `vue-tsc`), add root `"typecheck": "npm -C common run typecheck
-    && npm -C backend run typecheck && npm -C frontend run typecheck"`.
+  - Do: fix `frontend` `include` per D1 (keep `lib: DOM`, set `types: ["vite/client"]` for CSS
+    imports), add `vue-tsc --noEmit` as `frontend` typecheck (dep: `vue-tsc`; requires the
+    TypeScript 6.x pin from D14 — TS 7 is not supported by vue-tsc), add root `"typecheck"`
+    aggregating the three workspaces.
   - Verify: `npm run typecheck` → 0 errors.
   - Done when: `main.ts`, `App.vue` and `vite.config.ts` are actually covered.
 

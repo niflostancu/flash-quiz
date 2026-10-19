@@ -2,6 +2,8 @@
 import { readFile } from "node:fs/promises";
 import { parse } from "yaml";
 
+import type { BackendConfig } from "./types";
+
 export async function loadConfig(): Promise<BackendConfig> {
   const raw = await readFile("config.yaml", "utf8").catch(() => "{}");
   const cfg = parse(raw) as Partial<BackendConfig>;

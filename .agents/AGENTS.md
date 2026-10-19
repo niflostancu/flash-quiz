@@ -65,7 +65,7 @@ no grading in the app — only a CSV export consumed by a separate grader.
 
 | Concern | Decision |
 |---------|----------|
-| Language | TypeScript, `strict`, `noUncheckedIndexedAccess`, `verbatimModuleSyntax`, ESM everywhere |
+| Language | TypeScript, `strict`, `noUncheckedIndexedAccess`, `verbatimModuleSyntax`, ESM everywhere. Pinned to 6.0.3: `vue-tsc` cannot use the TS 7 native compiler (see TODO D14) |
 | Backend | Hono on `@hono/node-server`, bundled with esbuild |
 | Frontend | Vue 3 (`<script setup lang="ts">`) + Vite + Tailwind CSS v4 |
 | Shared code | `common/` — types, quiz parser, wire protocol, i18n. **No Node APIs** (it is bundled into the browser) |
