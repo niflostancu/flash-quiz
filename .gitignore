@@ -9,6 +9,13 @@ dist/
 .env.*
 config.yaml
 
+# Runtime data (SQLite DBs, exports). Keep the directory itself.
+data/*
+!data/.gitkeep
+*.sqlite
+*.sqlite-*
+*.db
+
 # logs, trash
 *.log
 .DS_Store
