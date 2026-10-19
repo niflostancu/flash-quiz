@@ -19,7 +19,8 @@
     "build": "npm -C frontend run build && npm -C backend run build",
     "start": "npm -C backend run start",
     "typecheck": "npm -C common run typecheck && npm -C backend run typecheck && npm -C frontend run typecheck",
-    "check": "npx biome check"
+    "check": "npx biome check",
+    "format": "npx biome check --write"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

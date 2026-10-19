@@ -125,7 +125,7 @@ scripts/   + optional dev helpers
   - Verify: `npm run typecheck` → 0 errors.
   - Done when: `main.ts`, `App.vue` and `vite.config.ts` are actually covered.
 
-- [ ] **S03 — Lint/format gate** · deps: S02 · commit: `chore: make biome check clean`
+- [x] **S03 — Lint/format gate** · deps: S02 · commit: `chore: make biome check clean`
   - Files: `.biome.json` (only if needed), source files (formatting only)
   - Do: run `npx biome check --write`, resolve the remaining diagnostics without behavior
     changes; add root `"format"` script; make sure `.agents/`, `data/`, `dist/` are ignored.
