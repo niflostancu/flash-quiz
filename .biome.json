@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
@@ -29,6 +29,12 @@
 		"formatter": {
 			"quoteStyle": "double"
 		}
+	},
+	"html": {
+		"parser": {"vue": true}
+	},
+	"css": {
+		"parser": {"tailwindDirectives": true}
 	},
 	"assist": {
 		"enabled": true,
