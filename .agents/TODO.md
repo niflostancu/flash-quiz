@@ -14,6 +14,13 @@ maintainer ticks it after reviewing and committing.
 Commit message prefix convention: `area: lowercase summary` where area is one of
 `common`, `backend`, `frontend`, `bin`, `devcontainer`, `docs`, `build`, `test`, `chore`.
 
+**Test location:** all tests live under `tests/` at the repo root and mirror the source path —
+`common/src/quiz/parse.ts` → `tests/common/quiz/parse.test.ts`, backend → `tests/backend/...`,
+frontend pure logic → `tests/frontend/lib/...`, CLI → `tests/bin/...`, end-to-end →
+`tests/e2e/...`. Tests are **never**
+colocated with source. Step file lists may name only the test filename; place it under `tests/`
+per this rule.
+
 ---
 
 ## Current state (verified 2026-10-19, master @ c7fde05)
@@ -91,11 +98,11 @@ Known gaps / defects to fix early:
 
 ```
 .agents/{Initial.md, AGENTS.md, TODO.md}
-.biome.json  package.json  tsconfig.json  data/ (+ .gitkeep, gitignored)
+.biome.json  package.json  tsconfig.json  tsconfig.tests.json  data/ (+ .gitkeep, gitignored)
 bin/ + fquiz.ts  fquiz-parse.ts  fquiz-export.ts
 common/src/
   index.ts
-  quiz/    + types.ts parse.ts validate.ts public.ts   (*.test.ts colocated)
+  quiz/    + types.ts parse.ts validate.ts public.ts
   protocol/ + messages.ts guards.ts
   i18n/    + en.ts ro.ts index.ts
 backend/src/
@@ -112,6 +119,7 @@ frontend/
   index.html main.ts App.vue assets/style.css
   + pages/{StudentPage,AdminPage,DisplayPage}.vue
   + components/…   + lib/{api.ts,ws.ts,storage.ts,i18n.ts,clock.ts}
+tests/     + common/ backend/ frontend/lib/ e2e/   (mirrors source paths, never colocated)
 docs/      + quiz-format.md deployment.md qa.md
 scripts/   + optional dev helpers
 ```
@@ -145,14 +153,16 @@ scripts/   + optional dev helpers
   - Verify: `npm run check` exits 0.
   - Done when: the only diff is lint/formatting.
 
-- [ ] **S04 — Test harness** · deps: S02 · commit: `test: add node:test + tsx harness`
-  - Files: `package.json` (root `test`), `common/package.json`, `backend/package.json`,
-    `common/src/smoke.test.ts`
-  - Do: run `node --import tsx --test "src/**/*.test.ts"` per workspace; root aggregates. One
-    trivial assertion proves the runner works; tests are colocated (`*.test.ts`) but excluded
-    from bundles (only entrypoints are bundled).
-  - Verify: `npm test` → tests discovered in `common/`.
-  - Done when: adding a failing test fails CI/`npm test`.
+- [x] **S04 — Test harness** · deps: S02 · commit: `test: add node:test + tsx harness`
+  - Files: `package.json` (root `test` + `typecheck`), `tsconfig.tests.json`,
+    `tests/common/smoke.test.ts`
+  - Do: one root runner `node --import tsx --test "tests/**/*.test.ts"` (quoted glob: a bare
+    directory argument can hang and would also pick up `dist/`). Add `tsconfig.tests.json`
+    (extends the root config, `types: ["node"]`, includes `tests`, `common/src`, `backend/src`,
+    `frontend/lib`) and append `tsc -p tsconfig.tests.json` to the root `typecheck`. One trivial
+    assertion proves the runner works; tests are never bundled (only entrypoints are).
+  - Verify: `npm test` → smoke test discovered; `npm run typecheck` typechecks the tests.
+  - Done when: adding a failing test fails `npm test`.
 
 - [ ] **S05 — Shared package surface** · deps: S04 · commit: `common: prepare shared package entrypoint`
   - Files: `common/package.json`, `common/src/index.ts`
@@ -385,7 +395,7 @@ scripts/   + optional dev helpers
   - Done when: a spreadsheet opens the output unchanged and history is complete.
 
 - [ ] **S32 — Quiz parse CLI** · deps: S12 · commit: `bin: add quiz markdown parser cli`
-  - Files: `bin/fquiz-parse.ts`, `bin/fquiz-parse.test.ts` (function-level)
+  - Files: `bin/fquiz-parse.ts`, `tests/bin/fquiz-parse.test.ts` (function-level)
   - Do: `fquiz-parse <quiz.md> [--json|--pretty|--out file]`, exit `2` on parse errors, print
     issues to stderr with `file:line`, no answers on stdout unless `--with-answers`.
   - Verify: run against all example slides; invalid file exits 2.
@@ -448,7 +458,8 @@ scripts/   + optional dev helpers
   - Done when: no username is sent anywhere before the user submits.
 
 - [ ] **S44 — WS client with mobile resilience** · deps: S41 · commit: `frontend: add reconnecting websocket client`
-  - Files: `frontend/lib/ws.ts`, `frontend/lib/ws.test.ts` (pure parts), `frontend/lib/clock.ts`
+  - Files: `frontend/lib/ws.ts`, `tests/frontend/lib/ws.test.ts` (pure parts),
+    `frontend/lib/clock.ts`
   - Do: build `ws://`/`wss://` from `location`; reconnect with exponential backoff (0.5 s → 8 s,
     jitter, reset on success); force-reconnect on `visibilitychange → visible` by nulling handlers,
     closing, and opening a fresh socket (iOS zombie sockets); reconnect on `online`; send `ping`
@@ -464,7 +475,7 @@ scripts/   + optional dev helpers
   - Done when: the UI never shows stale data after foregrounding.
 
 - [ ] **S45 — Student session store** · deps: S41, S44 · commit: `frontend: add student session store`
-  - Files: `frontend/lib/session.ts`, `frontend/lib/session.test.ts`
+  - Files: `frontend/lib/session.ts`, `tests/frontend/lib/session.test.ts`
   - Do: a small reactive store (no Pinia): `phase`, `questionIndex`, `deadline`, `answers` map,
     `pending` map, `connection`, `errors`; reducers `applyHello`, `applyState`, `applyAck`,
     `optimisticAnswer`, `revertPending`; compute "serverNow = Date.now() + offset"; on `hello`
@@ -620,7 +631,7 @@ scripts/   + optional dev helpers
   - Done when: every line has a recorded result.
 
 - [ ] **S66 — Integration test (spawned server)** · deps: S29, S33, S62 · commit: `test: add end-to-end server flow test`
-  - Files: `test/e2e.test.ts` (root), root `test:e2e` script
+  - Files: `tests/e2e/server.test.ts`, root `test:e2e` script
   - Do: start the built server on an ephemeral port with a temp DB + fixture quiz, drive
     `join → start → answer → expire → export` over HTTP + a `ws` client; assert DB rows and
     state transitions; kill the process in `after()`.
@@ -665,14 +676,16 @@ Parallelisable once `S17` lands: backend track (`S20…S34`) and frontend shell
 
 | Layer | Tool | What must be covered |
 |-------|------|----------------------|
-| `common` | `node:test` + `tsx`, colocated `*.test.ts` | parser, validator, public projection, guards, i18n parity |
-| `backend` | same, plus temp-dir SQLite | config resolution, migrations, repositories, engine (table-driven), routes via `app.request`, CSV golden files |
-| `frontend` | same for pure logic only | backoff/clock math, session store reducers |
-| e2e | root `test/e2e.test.ts`, `ws` client | join → start → answer → expire → export |
+| `common` | `node:test` + `tsx`, `tests/common/` | parser, validator, public projection, guards, i18n parity |
+| `backend` | same, `tests/backend/` + temp-dir SQLite | config resolution, migrations, repositories, engine (table-driven), routes via `app.request`, CSV golden files |
+| `frontend` | same for pure logic only, `tests/frontend/` | backoff/clock math, session store reducers |
+| e2e | `tests/e2e/server.test.ts`, `ws` client | join → start → answer → expire → export |
 
 Rules: tests must not depend on wall-clock sleeps (use mocked timers), must not bind fixed ports,
-must create their own temp DB (`mkdtemp`) and delete it. No coverage thresholds; every parser and
-engine branch is more valuable than a percentage.
+must create their own temp DB (`mkdtemp`) and delete it. Tests live under `tests/`, mirroring the
+source path, never next to the module they test. Test files are never imported by an entrypoint,
+so they never end up in a bundle. No coverage thresholds; every parser and engine branch is more
+valuable than a percentage.
 
 ## Intentionally deferred (do not build without a new decision)
 

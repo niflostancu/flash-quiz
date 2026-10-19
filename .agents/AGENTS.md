@@ -74,7 +74,7 @@ no grading in the app — only a CSV export consumed by a separate grader.
 | Routing (frontend) | `location.pathname` switch in `App.vue`. No vue-router |
 | Markdown render | `markdown-it` with `html:false`, rendered only through `MarkdownView.vue` |
 | i18n | hand-written typed dictionaries (`en` is the key source, `ro` must match). Student UI only |
-| Tests | `node:test` + `tsx`, colocated `*.test.ts`. No Vitest/Jest |
+| Tests | `node:test` + `tsx`, all under `tests/` mirroring source paths. No Vitest/Jest |
 | Lint/format | Biome (double quotes, 2 spaces, 100 cols) |
 | TLS | terminated by a reverse proxy. Never add TLS/cert handling to the server |
 | Paths | quiz file = CLI arg; everything writable under `data/` (gitignored, configurable) |
@@ -96,6 +96,7 @@ common/src/i18n/    EN/RO dictionaries
 backend/src/        config, db, quiz loading, session engine, http routes, ws hub, csv export
 backend/src/index.ts  bootstrap ONLY (wire deps, start server, graceful shutdown)
 frontend/           pages/, components/, lib/ (api, ws, session, storage)
+tests/              all tests, mirroring source paths (common/, backend/, frontend/, e2e/)
 data/               runtime SQLite files (never committed)
 docs/               quiz format, deployment, QA
 ```
@@ -152,11 +153,16 @@ A step is done only when:
 6. `git status` shows only files within the step's scope.
 
 Testing rules:
+- All tests live under `tests/` at the repo root, mirroring the source path
+  (`common/src/quiz/parse.ts` → `tests/common/quiz/parse.test.ts`; backend → `tests/backend/`;
+  frontend pure logic → `tests/frontend/lib/`; e2e → `tests/e2e/`). Never colocate a test with
+  the module it tests. `npm test` runs `node --import tsx --test "tests/**/*.test.ts"`; keep the
+  quoted glob (a bare directory argument can hang).
 - Test business logic, not frameworks. Parser, validator, engine, repositories, guards,
   reducers, CSV — these must be covered.
 - No `setTimeout`-based sleeps in tests; use `node:test` mock timers.
 - No fixed ports; no shared DB files — `mkdtemp` per test and clean up.
-- Frontend tests are limited to pure logic (`lib/*.ts`); UI is verified manually.
+- Frontend tests are limited to pure logic (`frontend/lib/*.ts`); UI is verified manually.
 
 ---
 

@@ -46,6 +46,7 @@ the plan for now).
 common/     shared TS: quiz types + markdown parser, protocol, i18n etc.
 backend/    config, SQLite, session engine, HTTP API, WebSocket hub, CSV export
 frontend/   Vue pages/components, API + WS clients, Tailwind styles
+tests/      all tests (node:test), mirroring the source paths
 bin/        CLI tools: server, quiz parser, CSV export (planned)
 data/       runtime SQLite files (gitignored, configurable)
 .agents/    requirements, development plan, agent workflow

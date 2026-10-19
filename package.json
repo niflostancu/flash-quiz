@@ -18,7 +18,8 @@
     "dev:backend": "npm -C backend run dev",
     "build": "npm -C frontend run build && npm -C backend run build",
     "start": "npm -C backend run start",
-    "typecheck": "npm -C common run typecheck && npm -C backend run typecheck && npm -C frontend run typecheck",
+    "typecheck": "npm -C common run typecheck && npm -C backend run typecheck && npm -C frontend run typecheck && tsc -p tsconfig.tests.json",
+    "test": "node --import tsx --test \"tests/**/*.test.ts\"",
     "check": "npx biome check",
     "format": "npx biome check --write"
   },
