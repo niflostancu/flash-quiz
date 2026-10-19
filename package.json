@@ -12,16 +12,17 @@
     "backend"
   ],
   "scripts": {
-    "dev": "npm run dev:backend",
+    "dev": "concurrently -n server,client -c blue,green \"npm:dev:backend\" \"npm:dev:frontend\"",
     "dev:frontend": "npm -C frontend run dev",
     "dev:backend": "npm -C backend run dev",
-    "build": "npm -C backend run build",
+    "build": "npm -C frontend run build && npm -C backend run build",
     "start": "npm -C backend run start",
     "check": "npx biome check"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
     "@types/node": "^24.19.2",
+    "concurrently": "^10.0.6",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   }
