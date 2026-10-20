@@ -4,7 +4,19 @@
 @theme {
   --color-bg: #ffffff;
   --color-fg: #111111;
-  --color-accent: #2563eb;
+  --color-muted: #4b5563;
+  --color-accent: #1d4ed8;
+  --color-success: #15803d;
+  --color-danger: #b91c1c;
+
+  /* Answer buttons A-F: dark enough for white text, distinct without relying
+     on hue alone (the letter is always shown). */
+  --color-choice-a: #1d4ed8;
+  --color-choice-b: #b91c1c;
+  --color-choice-c: #15803d;
+  --color-choice-d: #b45309;
+  --color-choice-e: #6d28d9;
+  --color-choice-f: #0e7490;
 }
 
 html,
@@ -19,4 +31,8 @@ body {
   color: var(--color-fg);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-text-size-adjust: 100%;
+}
+
+h1.error {
+  color: var(--color-danger);
 }

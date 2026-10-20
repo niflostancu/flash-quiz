@@ -1,11 +1,18 @@
 <script setup lang="ts">
-const _app_title = "Flash Quiz!";
+import AdminPage from "./pages/AdminPage.vue";
+import DisplayPage from "./pages/DisplayPage.vue";
+import NotFoundPage from "./pages/NotFoundPage.vue";
+import StudentPage from "./pages/StudentPage.vue";
+
+// right-trim slashes in path 
+const path = location.pathname.replace(/\/+$/, "") || "/";
 </script>
 
 <template>
-  <main class="flex min-h-full items-center justify-center">
-    <h1 class="text-2xl font-semibold">
-      {{ _app_title }}
-    </h1>
-  </main>
+  <!-- No router needed, simply load pages conditionally.
+    Each page owns its layout (header/footer). -->
+  <StudentPage v-if="path === '/'" />
+  <AdminPage v-else-if="path === '/admin'" />
+  <DisplayPage v-else-if="path === '/display'" />
+  <NotFoundPage v-else :path="path" />
 </template>

@@ -31,7 +31,8 @@
 		}
 	},
 	"html": {
-		"parser": {"vue": true}
+		"parser": { "vue": true },
+		"experimentalFullSupportEnabled": true
 	},
 	"css": {
 		"parser": {"tailwindDirectives": true}
