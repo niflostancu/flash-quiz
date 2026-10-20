@@ -177,7 +177,7 @@ scripts/   + optional dev helpers
 
 ## M1 — Common library (pure, no I/O)
 
-- [ ] **S10 — Quiz domain types** · deps: S05 · commit: `common: add quiz domain types`
+- [x] **S10 — Quiz domain types** · deps: S05 · commit: `common: add quiz domain types`
   - Files: `common/src/quiz/types.ts` (+ test-free)
   - Do: `Quiz { id, title, defaultAnswerTimeSec, instructionsMarkdown, slides }`,
     `Slide = QuestionSlide | InfoSlide`, `QuestionSlide { kind:"question", qid, promptMarkdown,
