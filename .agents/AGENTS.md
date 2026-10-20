@@ -53,7 +53,7 @@ origin:
 |------|-----|---------|
 | `/` | students (phone) | join with a username, then answer with letter buttons or a text/number field |
 | `/display` | projector | waiting screen with the join URL, then the current question + countdown |
-| `/admin` | teacher | start/pause/resume/end/reset, joined-student list, diagnostics |
+| `/admin` | teacher | start/pause/resume/end/reset, joined-student list (count + student ID per name), diagnostics |
 
 The server is the single source of truth: it owns the phase, the current question and the
 answer deadline. Answers are append-only history in SQLite with server timestamps. There is

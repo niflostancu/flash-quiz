@@ -233,7 +233,9 @@ scripts/   + optional dev helpers
       `ack {questionIndex, value, serverTs, clientSeq}`, `error {code, message}`,
       `pong {t, serverTime}`.
     - REST DTOs: `StateResponse`, `JoinResponse`, `AnswerResponse`, `QuizMetaResponse`,
-      `AdminStateResponse` (with quiz summary + students), `ApiError {code, message}`.
+      `AdminStateResponse` (quiz summary + joined students as
+ `{studentId, username, lang, connected, lastSeenAt}` + total count),
+ `ApiError {code, message}`.
   - Verify: `npm run typecheck`.
   - Done when: every message has one owner and the same types are used by both ends.
 
@@ -335,10 +337,12 @@ scripts/   + optional dev helpers
 - [ ] **S26 — App factory + REST routes** · deps: S22, S23, S25 · commit: `backend: add health, join, state and answer routes`
   - Files: `backend/src/app.ts`, `backend/src/http/routes.ts`, `http/middleware.ts` + tests
   - Do: `createApp(deps)` (Hono) so tests use `app.request`; routes:
-    `GET /api/health`, `GET /api/quiz/meta`, `GET /api/state`, `POST /api/join`,
-    `GET /api/answers/mine?studentId=`, `POST /api/answers`, admin actions
-    `POST /api/admin/{start,pause,resume,end,reset}`, `GET /api/admin/state`
-    (joined students, counts, resolved quiz path, db path, uptime). Uniform error envelope
+    `GET /api/health`, `GET /api/quiz/meta`, `GET /api/state`, `POST /api/join`
+    (server-side registration: upsert `students` by `studentId`, unique
+    username), `GET /api/answers/mine?studentId=`, `POST /api/answers`, admin
+    actions `POST /api/admin/{start,pause,resume,end,reset}`, `GET /api/admin/state`
+    (joined students with `studentId` + `username`, total joined count,
+    resolved quiz path, db path, uptime). Uniform error envelope
     `{ error: { code, message } }`; JSON body size limit; no stack traces in responses.
   - Verify: `npm test` — happy paths + 400/404/409 (name taken, late answer) via
     `app.request`; `curl` matrix in the step notes.
@@ -462,7 +466,8 @@ scripts/   + optional dev helpers
     persisted), persisted `fquiz.studentId` (`crypto.randomUUID`), `fquiz.username`, `fquiz.lang`;
     on submit `POST /api/join`, handle 409 by asking for another name; show quiz title after join.
   - Verify: refresh keeps the name; duplicate name in a second tab is rejected politely.
-  - Done when: no username is sent anywhere before the user submits.
+  - Done when: no username is sent anywhere before the user submits, and the
+    server has recorded the student (visible in `GET /api/admin/state`).
 
 - [ ] **S44 — WS client with mobile resilience** · deps: S41 · commit: `frontend: add reconnecting websocket client`
   - Files: `frontend/lib/ws.ts`, `tests/frontend/lib/ws.test.ts` (pure parts),
@@ -483,7 +488,7 @@ scripts/   + optional dev helpers
 
 - [ ] **S45 — Student session store** · deps: S41, S44 · commit: `frontend: add student session store`
   - Files: `frontend/lib/session.ts`, `tests/frontend/lib/session.test.ts`
-  - Do: a small reactive store (no Pinia): `phase`, `questionIndex`, `deadline`, `answers` map,
+  - Do: a small reactive store (no Pinia): `phase`, `qid`, `deadline`, `answers` map (keyed by `qid`),
     `pending` map, `connection`, `errors`; reducers `applyHello`, `applyState`, `applyAck`,
     `optimisticAnswer`, `revertPending`; compute "serverNow = Date.now() + offset"; on `hello`
     replace local answers with server truth (restore after refresh/background); re-`join` after
@@ -553,8 +558,10 @@ scripts/   + optional dev helpers
   - Files: `frontend/pages/AdminPage.vue`, `frontend/components/{AdminControls,StudentList}.vue`
   - Do: quiz summary (id, title, question count, answer times); buttons Start / Pause / Resume /
     Next (only if enabled later) / End / Reset with confirmations for destructive ones; live
-    phase badge + current question index; compact joined-student list (name, lang, connected,
-    last seen) — **no editing**; admin key prompt stored in `sessionStorage` when configured.
+    phase badge + current question index; total joined count + compact
+    joined-student list (username, student ID, lang, connected, last seen) —
+    **no editing**; student search with answer view is a future step, not this one;
+    admin key prompt stored in `sessionStorage` when configured.
   - Verify: each button changes phase within one round-trip; wrong key shows 401 message;
     accidental double-click cannot double-start.
   - Done when: the admin page never displays question answers or comments.

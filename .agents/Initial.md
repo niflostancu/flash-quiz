@@ -29,8 +29,10 @@ Here's the full plan and features that I require:
   unnecessary shadows / 3D boxes / images / gradients etc.
 - the administrator web UI shall have two pages: one to be used for control
   and diagnostics (ability to view the loaded quiz, buttons for starting the
-  quiz, resume/pause, end/reset the quiz; show a compact list of usernames 
-  registered - NO EDITOR required); the other one to be projected to the students
+  quiz, resume/pause, end/reset the quiz; show a compact list of registered
+  students - total count, each username linked to its stable student ID,
+  connected/last-seen - NO EDITOR required; later: search a student and view
+  their answers); the other one to be projected to the students
   (with no unintended questions / answers being visible, a customizable
   waiting screen showing instructions / the URL to the students, then each of
   the questions inside the rendered markdown with a countdown timer somewhere 
@@ -46,6 +48,10 @@ Here's the full plan and features that I require:
 - I will make the quizzes by hand, NO WEB-BASED EDITOR / CRUD MANAGEMENT
   whatsoever; the quiz file shall be given when starting the server, as CLI
   argument, for starters.
+- registration is server-side: when a student joins (username + stable
+  per-device student ID), the server records them so the admin can see who is
+  in the room (list + total count) and, later, look up a student's answers;
+  rejoining with the same student ID must not create a duplicate student;
 - student answers will be saved persistently in a sqlite database;
 - questions and answers appearing on the projector screen / students' mobile
   devices will be perfectly syncrhronized (sub-second latency! so use WebSocket
