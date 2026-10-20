@@ -164,7 +164,7 @@ scripts/   + optional dev helpers
   - Verify: `npm test` → smoke test discovered; `npm run typecheck` typechecks the tests.
   - Done when: adding a failing test fails `npm test`.
 
-- [ ] **S05 — Shared package surface** · deps: S04 · commit: `common: prepare shared package entrypoint`
+- [x] **S05 — Shared package surface** · deps: S04 · commit: `common: prepare shared package entrypoint`
   - Files: `common/package.json`, `common/src/index.ts`
   - Do: keep a single entrypoint `@fquiz/common` (`exports: { ".": "./src/index.ts" }`) and a
     documented placeholder in `src/index.ts`; the actual re-exports land in S17, once the
@@ -423,16 +423,23 @@ scripts/   + optional dev helpers
 
 ## M3 — Frontend (student → display → admin)
 
-- [ ] **S40 — Frontend skeleton & routing** · deps: S02, S17, D1/D6 · commit: `frontend: add page layout and pathname routing`
-  - Files: `frontend/App.vue`, `frontend/pages/*.vue`, `frontend/lib/*`, `frontend/tsconfig.json`
+> `S40`/`S42` are a dependency-free mock shell (only `S02`); do them early if useful. The rest
+> needs the shared types (`S41`) and eventually the live server.
+
+- [x] **S40 — Frontend skeleton & routing** · deps: S02, D1/D6 · commit: `frontend: add page layout and pathname routing`
+  - Files: `frontend/App.vue`, `frontend/pages/*.vue`, `frontend/assets/style.css`
   - Do: `App.vue` picks `StudentPage` (`/`), `AdminPage` (`/admin`), `DisplayPage` (`/display`)
     from `location.pathname` at mount (plus a 404 fallback); add `lang` attr, viewport already
     fine; Tailwind tokens (`bg`, `fg`, `muted`, `accent`, `success`, `danger`, answer colors) in
-    `assets/style.css`; placeholder content per page.
+    `assets/style.css`; placeholder content per page. **No imports from `@fquiz/common` and no
+    backend needed** — this is a mock shell that runs on the Vite dev server alone. Enable
+    `html.experimentalFullSupportEnabled` in `.biome.json` (required so `<script setup>` bindings
+    used only in the template are not reported as unused).
   - Verify: `npm run dev`, open all three paths, `npm run typecheck`.
-  - Done when: no page imports another page directly.
+  - Done when: no page imports another page directly, and `grep -r "@fquiz/common" frontend` is
+    empty (the shared barrel is not a dependency of the shell).
 
-- [ ] **S41 — API client** · deps: S14, S40 · commit: `frontend: add typed api client`
+- [ ] **S41 — API client** · deps: S14, S17, S40 · commit: `frontend: add typed api client`
   - Files: `frontend/lib/api.ts`, `frontend/lib/errors.ts`
   - Do: `request<T>()` with JSON, timeout via `AbortSignal` (5 s), typed errors carrying
     `code`/`message`/`status`; functions `getState`, `getQuizMeta`, `join`, `getMyAnswers`,
@@ -660,17 +667,22 @@ S17 → S20 → S21 → S22 → S23 → S24 → S25 → S26 → S27 → S29 → 
                                      S26 → S30
                           S22 → S31
                           S12 → S32
-S17 → S40 → S41 → S42 → S43 → S44 → S45 → S46 → S47 → S48 → S54 → S55
-              S41 → S49 → S50 → S51
-              S41 → S52 → S53
+S02 → S40
+S40 → S42
+S14,S17,S40 → S41
+S41,S42 → S43 → S44 → S45 → S46 → S47 → S48 → S54 → S55
+S41 → S49 → S50 → S51
+S41 → S52 → S53
 S30,S50 → S60 → S61 → S62 → S63 → S65
 S31,S54,S62 → S64
 S29,S33,S62 → S66
 all → S67
 ```
 
-Parallelisable once `S17` lands: backend track (`S20…S34`) and frontend shell
-(`S40…S42`) are independent. `S45+` needs live backend routes, so land `S26` first.
+Parallelisable: **`S40` and `S42` need only `S02`** — mock UI that runs on Vite with no backend
+or `common` imports; they can be done at any point after S02, in parallel with M1/M2. `S41` starts
+needing the shared barrel (`S14`/`S17`); real data flows (`S43+`) need the live routes (`S26`) and
+WS hub (`S29`). The backend track (`S20…S34`) is independent of the shell.
 
 ## Testing strategy (kept deliberately small)
 
